@@ -22,7 +22,7 @@ function is_running() {
 	let p, out;
 
 	try {
-		p = popen([ 'pidof', 'sing-box' ], 'r');
+		p = popen('pidof sing-box', 'r');
 	} catch (e) {
 		return false;
 	}
@@ -100,20 +100,20 @@ function delay(tag, timeout) {
 	let p;
 
 	try {
-		p = popen([ 'curl', '-s', '--max-time', '' + max, url ], 'r');
+		p = popen('/usr/bin/curl -s --max-time ' + max + ' "' + url + '"', 'r');
 	} catch (e) {
-		return { message: 'failed' };
+		return { message: 'failed', error: '' + e };
 	}
 
 	if (p == null)
-		return { message: 'failed' };
+		return { message: 'failed', error: 'null' };
 
 	let out = p.read('all') || '';
 	p.close();
 
 	let j = json(out);
 	if (j == null || type(j) != 'object')
-		return { message: 'bad response' };
+		return { message: 'bad response', output: out };
 
 	return j;
 }
