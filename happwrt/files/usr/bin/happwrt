@@ -1,0 +1,156 @@
+#!/bin/sh
+
+CONF=/etc/happwrt
+SHARE=/usr/share/happwrt
+RAW="$CONF/subscription.raw"
+NODES="$CONF/nodes.json"
+OPTS="$CONF/options.json"
+CONFIG="$CONF/config.json"
+LOCKDIR=/var/lock/happwrt
+SERVICE=/etc/init.d/happwrt
+SUB_UA=v2rayNG/1.8.5
+
+log() { logger -t happwrt "$*" 2>/dev/null; echo "happwrt: $*"; }
+
+acquire() {
+	mkdir -p "$(dirname "$LOCKDIR")"
+	if ! mkdir "$LOCKDIR" 2>/dev/null; then
+		echo "happwrt: another instance is running"
+		exit 1
+	fi
+	trap 'rmdir "$LOCKDIR" 2>/dev/null' EXIT INT TERM
+}
+
+release() {
+	rmdir "$LOCKDIR" 2>/dev/null
+	trap - EXIT INT TERM
+}
+
+conf_get() {
+	uci -q get "happwrt.main.$1"
+}
+
+fetch_sub() {
+	url="$(conf_get subscription_url)"
+	[ -n "$url" ] || { log "subscription_url is not set"; return 1; }
+	mkdir -p "$CONF"
+	case "$url" in
+		file://*) cp "${url#file://}" "$RAW" || return 1 ;;
+		http://*|https://*)
+			if command -v curl >/dev/null 2>&1; then
+				curl -fsSL --retry 2 -A "$SUB_UA" \
+					-c "$CONF/cookies.txt" -b "$CONF/cookies.txt" \
+					-o "$RAW" "$url" || return 1
+			elif command -v uclient-fetch >/dev/null 2>&1; then
+				uclient-fetch -q -T 60 -U "$SUB_UA" -O "$RAW" "$url" || return 1
+			else
+				wget -q -O "$RAW" "$url" || return 1
+			fi ;;
+		*) cp "$url" "$RAW" || return 1 ;;
+	esac
+	[ -s "$RAW" ] || { log "empty subscription response"; return 1; }
+	return 0
+}
+
+parse_sub() {
+	ucode "$SHARE/parse.uc" "$RAW" "$NODES" || return 1
+}
+
+do_generate() {
+	[ -s "$NODES" ] || { log "no nodes: run update first"; return 1; }
+	ucode "$SHARE/opts.uc" > "$OPTS" || return 1
+	ucode "$SHARE/gen.uc" "$OPTS" "$NODES" "$CONFIG" || return 1
+	if command -v sing-box >/dev/null 2>&1; then
+		if ! sing-box check -c "$CONFIG" >/dev/null 2>&1; then
+			log "sing-box config check failed"
+			return 1
+		fi
+	fi
+	return 0
+}
+
+restart_service() {
+	[ -x "$SERVICE" ] || return 0
+	"$SERVICE" restart >/dev/null 2>&1
+}
+
+cmd_update() {
+	acquire
+	fetch_sub || { release; return 1; }
+	parse_sub || { log "failed to parse subscription"; release; return 1; }
+	do_generate || { log "failed to generate config"; release; return 1; }
+	if [ "$(conf_get enabled)" = "1" ]; then
+		restart_service
+	fi
+	log "subscription updated"
+	release
+	return 0
+}
+
+cmd_gen() {
+	acquire
+	do_generate || { release; return 1; }
+	release
+	return 0
+}
+
+cmd_apply() {
+	acquire
+	do_generate || { release; return 1; }
+	if [ "$(conf_get enabled)" = "1" ]; then
+		restart_service
+	fi
+	release
+	return 0
+}
+
+cmd_autoupdate() {
+	interval="$(conf_get update_interval)"
+	[ -n "$interval" ] || interval=24
+	[ -s "$NODES" ] || { cmd_update; return $?; }
+	now="$(date +%s)"
+	mtime="$(stat -c %Y "$NODES" 2>/dev/null)"
+	[ -n "$mtime" ] || mtime=0
+	age=$(( (now - mtime) / 3600 ))
+	[ "$age" -ge "$interval" ] && cmd_update
+	return 0
+}
+
+cmd_node() {
+	[ -n "$1" ] || { echo "usage: happwrt node <tag>"; return 1; }
+	acquire
+	uci -q set "happwrt.main.selected_node=$1"
+	uci -q commit happwrt
+	do_generate || { release; return 1; }
+	if [ "$(conf_get enabled)" = "1" ]; then
+		restart_service
+	fi
+	log "selected node: $1"
+	release
+	return 0
+}
+
+cmd_status() {
+	[ -s "$CONFIG" ] && echo "config: present" || echo "config: missing"
+	if pidof sing-box >/dev/null 2>&1; then
+		echo "service: running"
+	else
+		echo "service: stopped"
+	fi
+	echo "enabled: $(conf_get enabled)"
+	echo "mode: $(conf_get proxy_mode)"
+	echo "subscription: $(conf_get subscription_url)"
+}
+
+case "$1" in
+	update) cmd_update ;;
+	gen) cmd_gen ;;
+	apply|generate|reload) cmd_apply ;;
+	autoupdate) cmd_autoupdate ;;
+	node) shift; cmd_node "$1" ;;
+	restart) "$SERVICE" restart ;;
+	start) "$SERVICE" start ;;
+	stop) "$SERVICE" stop ;;
+	status) cmd_status ;;
+	*) echo "usage: happwrt {update|gen|apply|autoupdate|node <tag>|restart|start|stop|status}"; exit 1 ;;
+esac

@@ -1,0 +1,17 @@
+{
+	"luci-app-happwrt": {
+		"description": "Grant access to HappWRT configuration and actions",
+		"read": {
+			"ubus": {
+				"luci.happwrt": [ "status", "nodes" ]
+			},
+			"uci": [ "happwrt" ]
+		},
+		"write": {
+			"ubus": {
+				"luci.happwrt": [ "update", "reload" ]
+			},
+			"uci": [ "happwrt" ]
+		}
+	}
+}

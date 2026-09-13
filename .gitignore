@@ -1,0 +1,6 @@
+/bin/
+/build_dir/
+/logs/
+*.o
+*.pyc
+__pycache__/

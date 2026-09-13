@@ -1,0 +1,13 @@
+{
+	"admin/services/happwrt": {
+		"title": "HappWRT",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "happwrt/main"
+		},
+		"depends": {
+			"acl": [ "luci-app-happwrt" ]
+		}
+	}
+}

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+mkdir -p /etc/happwrt
+
+if ! grep -q happwrt /etc/crontabs/root 2>/dev/null; then
+	echo "23 */6 * * * /usr/bin/happwrt autoupdate >/dev/null 2>&1" >> /etc/crontabs/root
+	/etc/init.d/cron restart >/dev/null 2>&1
+fi
+
+exit 0

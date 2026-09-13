@@ -1,0 +1,30 @@
+[
+	{
+		"tag": "node-1",
+		"name": "A",
+		"type": "vless",
+		"server": "a.example.com",
+		"server_port": 443,
+		"outbound": {
+			"type": "vless",
+			"tag": "node-1",
+			"server": "a.example.com",
+			"server_port": 443,
+			"uuid": "u1"
+		}
+	},
+	{
+		"tag": "node-2",
+		"name": "B",
+		"type": "trojan",
+		"server": "b.example.com",
+		"server_port": 443,
+		"outbound": {
+			"type": "trojan",
+			"tag": "node-2",
+			"server": "b.example.com",
+			"server_port": 443,
+			"password": "p"
+		}
+	}
+]

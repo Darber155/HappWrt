@@ -1,0 +1,7 @@
+vless://11111111-1111-1111-1111-111111111111@example.com:443?encryption=none&security=tls&sni=example.com&type=ws&host=example.com&path=%2Fws#NL-1
+vmess://eyJ2IjoiMiIsInBzIjoiREUtV00iLCJhZGQiOiJkZS5leGFtcGxlLmNvbSIsInBvcnQiOiI4MDgwIiwiaWQiOiIyMjIyMjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIiLCJhaWQiOiIwIiwic2N5IjoiYXV0byIsIm5ldCI6IndzIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiZGUuZXhhbXBsZS5jb20iLCJwYXRoIjoiL3BhdGgiLCJ0bHMiOiJ0bHMiLCJzbmkiOiJkZS5leGFtcGxlLmNvbSJ9
+trojan://secretpass@tr.example.com:8443?security=tls&sni=tr.example.com#TR-1
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@ss.example.com:8388#SS-1
+hysteria2://pass123@hy.example.com:8443?sni=hy.example.com&insecure=1#HY2-1
+tuic://33333333-3333-3333-3333-333333333333:tpass@tuic.example.com:443?sni=tuic.example.com&congestion_control=bbr#TUIC-1
+anytls://apass@any.example.com:443?sni=any.example.com#ANY-1
