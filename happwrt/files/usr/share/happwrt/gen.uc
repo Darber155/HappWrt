@@ -119,6 +119,14 @@ if (mode == 'bypass_blocked') {
 	});
 }
 
+if (bool(opts.bypass_games)) {
+	push(ruleSets, {
+		type: 'remote', tag: 'geosite-games', format: 'binary',
+		url: rsBase + '/SagerNet/sing-geosite/rule-set/geosite-category-games.srs',
+		download_detour: 'proxy', update_interval: '7d'
+	});
+}
+
 let ddom = arr(opts.custom_direct_domains);
 let pdom = arr(opts.custom_proxy_domains);
 let dcidr = arr(opts.custom_direct_cidrs);
@@ -133,6 +141,19 @@ if (length(dcidr))
 	push(rules, { ip_cidr: dcidr, outbound: 'direct' });
 if (length(ddom))
 	push(rules, { domain_suffix: ddom, outbound: 'direct' });
+
+if (bool(opts.bypass_games)) {
+	push(rules, { rule_set: [ 'geosite-games' ], outbound: 'direct' });
+	push(rules, {
+		port_range: [
+			'27000:27100', '27015', '27036',
+			'3478:3480', '9295:9304',
+			'3074', '3544', '4500',
+			'5000:5500'
+		],
+		outbound: 'direct'
+	});
+}
 
 if (mode == 'bypass_ru')
 	push(rules, { rule_set: [ 'geosite-ru', 'geoip-ru' ], outbound: 'direct' });
@@ -158,6 +179,8 @@ let dnsServers = [
 let dnsRules = [];
 if (length(ddom))
 	push(dnsRules, { domain_suffix: ddom, server: 'dns-direct' });
+if (bool(opts.bypass_games))
+	push(dnsRules, { rule_set: [ 'geosite-games' ], server: 'dns-direct' });
 if (mode == 'bypass_ru')
 	push(dnsRules, { rule_set: [ 'geosite-ru' ], server: 'dns-direct' });
 if (mode == 'bypass_blocked')

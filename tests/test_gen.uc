@@ -121,6 +121,30 @@ for (let i = 0; i < length(resBlocked.cfg.route.rules); i++)
 check(hasRefilter, "refilter rule-set declared via proxy");
 check(hasBlockedRule, "blocked resources routed via proxy");
 
+baseOpts.bypass_games = true;
+let resGames = generate("bypass_blocked", baseOpts);
+check(resGames.code == 0, "gen bypass_games exit 0");
+let hasGameSet = false, hasGameDirect = false, hasGamePorts = false;
+for (let i = 0; i < length(resGames.cfg.route.rule_set); i++)
+	if (resGames.cfg.route.rule_set[i].tag == "geosite-games")
+		hasGameSet = true;
+for (let i = 0; i < length(resGames.cfg.route.rules); i++) {
+	let rr = resGames.cfg.route.rules[i];
+	if (rr.rule_set != null) {
+		let hasGame = false;
+		for (let k = 0; k < length(rr.rule_set); k++)
+			if (rr.rule_set[k] == "geosite-games")
+				hasGame = true;
+		if (hasGame && rr.outbound == "direct")
+			hasGameDirect = true;
+	}
+	if (rr.port_range != null && rr.outbound == "direct")
+		hasGamePorts = true;
+}
+check(hasGameSet, "geosite-games rule-set declared");
+check(hasGameDirect, "game domains routed direct");
+check(hasGamePorts, "game ports routed direct");
+
 if (failures > 0) {
 	print(failures + " gen test(s) failed\n");
 	exit(1);

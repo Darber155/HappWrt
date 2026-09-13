@@ -308,6 +308,8 @@ return view.extend({
 		o.default = 'warn';
 
 		o = s.option(form.Flag, 'ad_block', _('Block ads'));
+		o = s.option(form.Flag, 'bypass_games', _('Keep games off the VPN'),
+			_('Route game services (Steam, Epic, PlayStation, Xbox, Nintendo, Riot, Blizzard, etc.) and common game ports directly.'));
 		o = s.option(form.Flag, 'clash_api', _('Clash API'),
 			_('Local API used for latency tests and statistics.'));
 
