@@ -78,6 +78,8 @@ function status() {
 		nodes: list
 	};
 
+	uci.unload();
+
 	try {
 		let s = stat('/etc/happwrt/nodes.json');
 		if (s != null && s.mtime != null)
@@ -85,6 +87,35 @@ function status() {
 	} catch (e) {}
 
 	return st;
+}
+
+function delay(tag, timeout) {
+	if (!timeout || timeout != timeout || timeout < 1000)
+		timeout = 5000;
+
+	let max = int(timeout / 1000) + 3;
+	let url = 'http://127.0.0.1:9090/proxies/' + tag +
+		'/delay?url=http%3A%2F%2Fcp.cloudflare.com%2Fgenerate_204&timeout=' + timeout;
+
+	let p;
+
+	try {
+		p = popen([ 'curl', '-s', '--max-time', '' + max, url ], 'r');
+	} catch (e) {
+		return { message: 'failed' };
+	}
+
+	if (p == null)
+		return { message: 'failed' };
+
+	let out = p.read('all') || '';
+	p.close();
+
+	let j = json(out);
+	if (j == null || type(j) != 'object')
+		return { message: 'bad response' };
+
+	return j;
 }
 
 const methods = {
@@ -105,7 +136,42 @@ const methods = {
 	},
 	reload: {
 		call: function () {
-			return run('/usr/bin/happwrt generate');
+			return run('/usr/bin/happwrt apply');
+		}
+	},
+	test_delay: {
+		args: { tag: 'String' },
+		call: function (request) {
+			let tag = request.args.tag || 'auto';
+			return delay(tag, 5000);
+		}
+	},
+	select_node: {
+		args: { tag: 'String' },
+		call: function (request) {
+			let tag = request.args.tag || '';
+			let uci = cursor();
+			uci.set('happwrt', 'main', 'selected_node', tag);
+			uci.commit('happwrt');
+			uci.unload();
+			run('/usr/bin/happwrt apply');
+			return status();
+		}
+	},
+	set_enabled: {
+		args: { enabled: 'String' },
+		call: function (request) {
+			let en = (request.args.enabled == '1' || request.args.enabled == 1 ||
+				request.args.enabled === true) ? '1' : '0';
+			let uci = cursor();
+			uci.set('happwrt', 'main', 'enabled', en);
+			uci.commit('happwrt');
+			uci.unload();
+			if (en == '1')
+				run('/usr/bin/happwrt apply');
+			else
+				run('/etc/init.d/happwrt stop');
+			return status();
 		}
 	}
 };
