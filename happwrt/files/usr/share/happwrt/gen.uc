@@ -133,7 +133,7 @@ if (length(pdom))
 let final = (mode == 'rules_only') ? 'direct' : 'proxy';
 
 let dnsServers = [
-	{ type: 'udp', tag: 'dns-direct', server: str(opts.dns_direct, '77.88.8.8'), detour: 'direct' },
+	{ type: 'udp', tag: 'dns-direct', server: str(opts.dns_direct, '77.88.8.8') },
 	{ type: 'udp', tag: 'dns-proxy', server: str(opts.dns_proxy, '1.1.1.1'), detour: 'proxy' }
 ];
 
