@@ -92,11 +92,17 @@ apk add --allow-untrusted /tmp/happwrt.apk /tmp/luci-app-happwrt.apk
 
 ### Режимы маршрутизации
 
+- **bypass_blocked** (по умолчанию) — всё идёт напрямую, а **через прокси только
+  ресурсы, заблокированные в РФ**. Используются rule-set'ы
+  [`1andrevich/Re-filter-lists`](https://github.com/1andrevich/Re-filter-lists):
+  домены (`refilter-domains`) и IP (`refilter-ips`). Они скачиваются через сам
+  прокси и **обновляются автоматически раз в сутки**, кэшируются в
+  `/etc/happwrt/cache.db`. DNS для этих доменов тоже идёт через прокси.
 - **bypass_ru** — весь трафик идёт через прокси, кроме российских домен/IP
   (rule-set `geosite-category-ru` и `geoip-ru`), локальных сетей и всего, что
   указано в «Always direct».
 - **rules_only** — напрямую идёт всё, через прокси — только домены/IP из списков
-  «Always proxy» (по умолчанию). Удобно для точечного обхода.
+  «Always proxy». Удобно для точечного обхода.
 - **global** — всё через прокси.
 
 Списки **Always proxy/direct** добавляются поверх любого режима.

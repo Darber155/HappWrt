@@ -105,6 +105,22 @@ let resRules = generate("rules_only", baseOpts);
 check(resRules.code == 0, "gen rules_only exit 0");
 check(resRules.cfg.route.final == "direct", "rules_only final direct");
 
+let resBlocked = generate("bypass_blocked", baseOpts);
+check(resBlocked.code == 0, "gen bypass_blocked exit 0");
+check(resBlocked.cfg.route.final == "direct", "bypass_blocked final direct");
+check(resBlocked.cfg.dns.final == "dns-direct", "bypass_blocked dns final direct");
+let hasRefilter = false, hasBlockedRule = false;
+for (let i = 0; i < length(resBlocked.cfg.route.rule_set); i++)
+	if (resBlocked.cfg.route.rule_set[i].tag == "refilter-domains" &&
+	    resBlocked.cfg.route.rule_set[i].download_detour == "proxy")
+		hasRefilter = true;
+for (let i = 0; i < length(resBlocked.cfg.route.rules); i++)
+	if (resBlocked.cfg.route.rules[i].rule_set != null &&
+	    resBlocked.cfg.route.rules[i].outbound == "proxy")
+		hasBlockedRule = true;
+check(hasRefilter, "refilter rule-set declared via proxy");
+check(hasBlockedRule, "blocked resources routed via proxy");
+
 if (failures > 0) {
 	print(failures + " gen test(s) failed\n");
 	exit(1);

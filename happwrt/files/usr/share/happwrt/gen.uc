@@ -42,7 +42,7 @@ function bool(v) {
 	return v === true || v === 1 || v == '1' || v == 'true';
 }
 
-let mode = str(opts.proxy_mode, 'bypass_ru');
+let mode = str(opts.proxy_mode, 'bypass_blocked');
 let selected = str(opts.selected_node, '');
 
 let tagList = [];
@@ -104,6 +104,21 @@ if (bool(opts.ad_block)) {
 	});
 }
 
+if (mode == 'bypass_blocked') {
+	let rb = str(opts.blocked_list_base,
+		'https://github.com/1andrevich/Re-filter-lists/releases/latest/download');
+	push(ruleSets, {
+		type: 'remote', tag: 'refilter-domains', format: 'binary',
+		url: rb + '/ruleset-domain-refilter_domains.srs',
+		download_detour: 'proxy', update_interval: '1d'
+	});
+	push(ruleSets, {
+		type: 'remote', tag: 'refilter-ips', format: 'binary',
+		url: rb + '/ruleset-ip-refilter_ipsum.srs',
+		download_detour: 'proxy', update_interval: '1d'
+	});
+}
+
 let ddom = arr(opts.custom_direct_domains);
 let pdom = arr(opts.custom_proxy_domains);
 let dcidr = arr(opts.custom_direct_cidrs);
@@ -122,6 +137,9 @@ if (length(ddom))
 if (mode == 'bypass_ru')
 	push(rules, { rule_set: [ 'geosite-ru', 'geoip-ru' ], outbound: 'direct' });
 
+if (mode == 'bypass_blocked')
+	push(rules, { rule_set: [ 'refilter-domains', 'refilter-ips' ], outbound: 'proxy' });
+
 if (bool(opts.ad_block))
 	push(rules, { rule_set: [ 'geosite-ads' ], outbound: 'block' });
 
@@ -130,7 +148,7 @@ if (length(pcidr))
 if (length(pdom))
 	push(rules, { domain_suffix: pdom, outbound: 'proxy' });
 
-let final = (mode == 'rules_only') ? 'direct' : 'proxy';
+let final = (mode == 'rules_only' || mode == 'bypass_blocked') ? 'direct' : 'proxy';
 
 let dnsServers = [
 	{ type: 'udp', tag: 'dns-direct', server: str(opts.dns_direct, '77.88.8.8') },
@@ -142,6 +160,8 @@ if (length(ddom))
 	push(dnsRules, { domain_suffix: ddom, server: 'dns-direct' });
 if (mode == 'bypass_ru')
 	push(dnsRules, { rule_set: [ 'geosite-ru' ], server: 'dns-direct' });
+if (mode == 'bypass_blocked')
+	push(dnsRules, { rule_set: [ 'refilter-domains' ], server: 'dns-proxy' });
 if (length(pdom))
 	push(dnsRules, { domain_suffix: pdom, server: 'dns-proxy' });
 if (bool(opts.clash_api)) {
@@ -149,7 +169,7 @@ if (bool(opts.clash_api)) {
 	push(dnsRules, { clash_mode: 'global', server: 'dns-proxy' });
 }
 
-let dnsFinal = (mode == 'rules_only') ? 'dns-direct' : 'dns-proxy';
+let dnsFinal = (mode == 'rules_only' || mode == 'bypass_blocked') ? 'dns-direct' : 'dns-proxy';
 
 let dns = {
 	servers: dnsServers,

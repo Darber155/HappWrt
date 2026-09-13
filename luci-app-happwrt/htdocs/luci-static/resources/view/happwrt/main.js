@@ -257,10 +257,11 @@ return view.extend({
 		o.rmempty = true;
 
 		o = s.option(form.ListValue, 'proxy_mode', _('Routing mode'));
+		o.value('bypass_blocked', _('Proxy only resources blocked in Russia'));
 		o.value('bypass_ru', _('Proxy all except Russia (RU direct)'));
 		o.value('rules_only', _('Proxy only the listed domains and IPs'));
 		o.value('global', _('Proxy everything'));
-		o.default = 'bypass_ru';
+		o.default = 'bypass_blocked';
 		o.rmempty = false;
 
 		o = s.option(form.Value, 'update_interval', _('Update interval'),

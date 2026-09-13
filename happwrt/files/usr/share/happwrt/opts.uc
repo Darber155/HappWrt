@@ -36,7 +36,7 @@ let o = {
 	enabled: get('enabled', '0') == '1',
 	subscription_url: get('subscription_url', ''),
 	update_interval: get('update_interval', '24'),
-	proxy_mode: get('proxy_mode', 'bypass_ru'),
+	proxy_mode: get('proxy_mode', 'bypass_blocked'),
 	selected_node: get('selected_node', ''),
 	dns_direct: get('dns_direct', '77.88.8.8'),
 	dns_proxy: get('dns_proxy', '1.1.1.1'),
