@@ -3,13 +3,13 @@
 		"description": "Grant access to HappWRT configuration and actions",
 		"read": {
 			"ubus": {
-				"luci.happwrt": [ "status", "nodes" ]
+				"luci.happwrt": [ "status", "nodes", "test_delay" ]
 			},
 			"uci": [ "happwrt" ]
 		},
 		"write": {
 			"ubus": {
-				"luci.happwrt": [ "update", "reload" ]
+				"luci.happwrt": [ "update", "reload", "select_node", "set_enabled" ]
 			},
 			"uci": [ "happwrt" ]
 		}
