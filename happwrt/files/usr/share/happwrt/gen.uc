@@ -180,7 +180,7 @@ let tun = {
 	mtu: num(opts.tun_mtu, 9000),
 	auto_route: true,
 	strict_route: false,
-	stack: str(opts.tun_stack, 'system'),
+	stack: str(opts.tun_stack, 'gvisor'),
 	endpoint_independent_nat: true,
 	udp_timeout: '5m',
 	route_exclude_address: [

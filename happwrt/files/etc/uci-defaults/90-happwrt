@@ -2,6 +2,27 @@
 
 mkdir -p /etc/happwrt
 
+if ! uci -q show firewall | grep -q "happwrt0"; then
+	uci add firewall zone >/dev/null 2>&1
+	uci set firewall.@zone[-1].name='happwrt'
+	uci set firewall.@zone[-1].input='ACCEPT'
+	uci set firewall.@zone[-1].output='ACCEPT'
+	uci set firewall.@zone[-1].forward='ACCEPT'
+	uci set firewall.@zone[-1].mtu_fix='1'
+	uci add_list firewall.@zone[-1].device='happwrt0'
+
+	uci add firewall forwarding >/dev/null 2>&1
+	uci set firewall.@forwarding[-1].src='lan'
+	uci set firewall.@forwarding[-1].dest='happwrt'
+
+	uci add firewall forwarding >/dev/null 2>&1
+	uci set firewall.@forwarding[-1].src='happwrt'
+	uci set firewall.@forwarding[-1].dest='lan'
+
+	uci commit firewall
+	/etc/init.d/firewall restart >/dev/null 2>&1
+fi
+
 if ! grep -q happwrt /etc/crontabs/root 2>/dev/null; then
 	echo "23 */6 * * * /usr/bin/happwrt autoupdate >/dev/null 2>&1" >> /etc/crontabs/root
 	/etc/init.d/cron restart >/dev/null 2>&1

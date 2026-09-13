@@ -107,10 +107,10 @@ return view.extend({
 		o.default = 'ipv4_only';
 
 		o = s.option(form.ListValue, 'tun_stack', _('TUN stack'));
-		o.value('system', _('System'));
 		o.value('gvisor', _('gVisor'));
+		o.value('system', _('System'));
 		o.value('mixed', _('Mixed'));
-		o.default = 'system';
+		o.default = 'gvisor';
 
 		o = s.option(form.Value, 'wan_interface', _('WAN interface'),
 			_('Optional. Bind outgoing connections to this interface (e.g. wan). Leave empty for auto-detection.'));
