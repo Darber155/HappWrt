@@ -52,6 +52,7 @@ let o = {
 	urltest_interval: get('urltest_interval', '3m'),
 	ad_block: get('ad_block', '0') == '1',
 	bypass_games: get('bypass_games', '1') == '1',
+	select: get_list('select'),
 	rule_set_base: get('rule_set_base', 'https://raw.githubusercontent.com'),
 	custom_direct_domains: get_list('custom_direct_domains'),
 	custom_proxy_domains: get_list('custom_proxy_domains'),

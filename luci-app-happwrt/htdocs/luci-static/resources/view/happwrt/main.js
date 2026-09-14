@@ -39,6 +39,13 @@ var callSetEnabled = rpc.declare({
 	expect: {}
 });
 
+var callSetResource = rpc.declare({
+	object: 'luci.happwrt',
+	method: 'set_resource',
+	params: [ 'key', 'enabled' ],
+	expect: {}
+});
+
 var COUNTRY = {
 	'netherlands': 'NL', 'nl': 'NL', 'holland': 'NL',
 	'germany': 'DE', 'de': 'DE', 'deutschland': 'DE',
@@ -242,6 +249,30 @@ return view.extend({
 		return card;
 	},
 
+	renderResources: function (st) {
+		var self = this;
+		var res = st.resources || [];
+		var rows = res.map(function (r) {
+			return E('label', {
+				style: 'display:inline-flex;align-items:center;gap:6px;min-width:210px;padding:4px 8px 4px 0'
+			}, [
+				E('input', {
+					type: 'checkbox',
+					checked: r.selected ? 'checked' : null,
+					change: function (ev) { self.setResource(r.key, ev.target.checked); }
+				}),
+				E('span', {}, r.label)
+			]);
+		});
+
+		return E('div', { class: 'cbi-section' }, [
+			E('h3', {}, _('Resources for selective mode')),
+			E('div', { style: 'font-size:12px;opacity:0.7;padding:0 0 8px' },
+				_('Checked items go through the VPN when routing mode is "Proxy only the resources selected below". Everything else (including games) stays direct.')),
+			E('div', { style: 'display:flex;flex-wrap:wrap' }, rows)
+		]);
+	},
+
 	renderSettings: function (st) {
 		var m, s, o;
 
@@ -257,6 +288,7 @@ return view.extend({
 		o.rmempty = true;
 
 		o = s.option(form.ListValue, 'proxy_mode', _('Routing mode'));
+		o.value('selective', _('Proxy only the resources selected below'));
 		o.value('bypass_blocked', _('Proxy only resources blocked in Russia'));
 		o.value('bypass_ru', _('Proxy all except Russia (RU direct)'));
 		o.value('rules_only', _('Proxy only the listed domains and IPs'));
@@ -336,7 +368,8 @@ return view.extend({
 		var container = E('div', { class: 'cbi-map' }, [
 			E('h2', { name: 'content' }, _('HappWRT')),
 			this.renderStatus(st),
-			this.renderServers(st)
+			this.renderServers(st),
+			this.renderResources(st)
 		]);
 
 		var map = this.renderSettings(st);
@@ -367,6 +400,16 @@ return view.extend({
 		}, function () {
 			ui.hideModal();
 			ui.addNotification(null, E('p', {}, _('Failed to change state')), 'error');
+		});
+	},
+
+	setResource: function (key, enabled) {
+		var self = this;
+		ui.addNotification(null, E('p', {}, _('Applying...')), 'info');
+		return callSetResource(key, enabled ? '1' : '0').then(function () {
+			ui.addNotification(null, E('p', {}, _('Applied')), 'info');
+		}, function () {
+			ui.addNotification(null, E('p', {}, _('Failed to update resource')), 'error');
 		});
 	},
 

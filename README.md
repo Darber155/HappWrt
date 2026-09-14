@@ -94,6 +94,10 @@ apk add --allow-untrusted /tmp/happwrt.apk /tmp/luci-app-happwrt.apk
 
 ### Режимы маршрутизации
 
+- **selective** — через прокси идут только ресурсы, отмеченные галочками в блоке
+  **Resources for selective mode** (YouTube, Google, Instagram, Telegram,
+  Discord, ChatGPT, Netflix, Steam, Games и т.д.). Всё остальное, включая игры,
+  идёт напрямую. Галочки можно менять на лету, применяется сразу.
 - **bypass_blocked** (по умолчанию) — всё идёт напрямую, а **через прокси только
   ресурсы, заблокированные в РФ**. Используются rule-set'ы
   [`1andrevich/Re-filter-lists`](https://github.com/1andrevich/Re-filter-lists):

@@ -145,6 +145,32 @@ check(hasGameSet, "geosite-games rule-set declared");
 check(hasGameDirect, "game domains routed direct");
 check(hasGamePorts, "game ports routed direct");
 
+let selOpts = {
+	enabled: true,
+	selected_node: "",
+	ad_block: false,
+	clash_api: false,
+	tun_stack: "gvisor",
+	select: [ "youtube", "instagram" ]
+};
+let resSel = generate("selective", selOpts);
+check(resSel.code == 0, "gen selective exit 0");
+check(resSel.cfg.route.final == "direct", "selective final direct");
+let hasSelSet = false, hasSelRule = false;
+for (let i = 0; i < length(resSel.cfg.route.rule_set); i++)
+	if (resSel.cfg.route.rule_set[i].tag == "sel-youtube")
+		hasSelSet = true;
+for (let i = 0; i < length(resSel.cfg.route.rules); i++) {
+	let rr = resSel.cfg.route.rules[i];
+	if (rr.rule_set != null && rr.outbound == "proxy") {
+		for (let k = 0; k < length(rr.rule_set); k++)
+			if (rr.rule_set[k] == "sel-youtube")
+				hasSelRule = true;
+	}
+}
+check(hasSelSet, "selective resource rule-set declared");
+check(hasSelRule, "selective resources routed via proxy");
+
 if (failures > 0) {
 	print(failures + " gen test(s) failed\n");
 	exit(1);

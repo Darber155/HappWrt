@@ -9,7 +9,7 @@
 		},
 		"write": {
 			"ubus": {
-				"luci.happwrt": [ "update", "reload", "select_node", "set_enabled" ]
+				"luci.happwrt": [ "update", "reload", "select_node", "set_enabled", "set_resource" ]
 			},
 			"uci": [ "happwrt" ]
 		}

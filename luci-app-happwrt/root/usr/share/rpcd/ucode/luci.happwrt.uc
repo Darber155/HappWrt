@@ -3,6 +3,30 @@
 import { readfile, stat, popen } from 'fs';
 import { cursor } from 'uci';
 
+const RESOURCES = [
+	[ 'youtube', 'YouTube' ],
+	[ 'google', 'Google' ],
+	[ 'instagram', 'Instagram' ],
+	[ 'facebook', 'Facebook' ],
+	[ 'twitter', 'Twitter / X' ],
+	[ 'tiktok', 'TikTok' ],
+	[ 'telegram', 'Telegram' ],
+	[ 'discord', 'Discord' ],
+	[ 'openai', 'ChatGPT / OpenAI' ],
+	[ 'netflix', 'Netflix' ],
+	[ 'spotify', 'Spotify' ],
+	[ 'twitch', 'Twitch' ],
+	[ 'reddit', 'Reddit' ],
+	[ 'github', 'GitHub' ],
+	[ 'microsoft', 'Microsoft' ],
+	[ 'apple', 'Apple' ],
+	[ 'steam', 'Steam' ],
+	[ 'games', 'Games (all)' ],
+	[ 'whatsapp', 'WhatsApp' ],
+	[ 'signal', 'Signal' ],
+	[ 'linkedin', 'LinkedIn' ]
+];
+
 function read_json(path) {
 	let s;
 
@@ -72,11 +96,25 @@ function status() {
 		running: is_running(),
 		enabled: uci.get('happwrt', 'main', 'enabled') == '1',
 		subscription_url: uci.get('happwrt', 'main', 'subscription_url') || '',
-		proxy_mode: uci.get('happwrt', 'main', 'proxy_mode') || 'bypass_ru',
+		proxy_mode: uci.get('happwrt', 'main', 'proxy_mode') || 'bypass_blocked',
 		selected_node: uci.get('happwrt', 'main', 'selected_node') || '',
 		node_count: length(list),
 		nodes: list
 	};
+
+	let selRaw = uci.get('happwrt', 'main', 'select');
+	let selList = (selRaw == null) ? [] : ((type(selRaw) == 'array') ? selRaw : [ selRaw ]);
+	let selMap = {};
+	for (let i = 0; i < length(selList); i++)
+		selMap['' + selList[i]] = true;
+
+	st.resources = [];
+	for (let i = 0; i < length(RESOURCES); i++)
+		push(st.resources, {
+			key: RESOURCES[i][0],
+			label: RESOURCES[i][1],
+			selected: selMap[RESOURCES[i][0]] == true
+		});
 
 	uci.unload();
 
@@ -171,6 +209,40 @@ const methods = {
 				run('/usr/bin/happwrt apply');
 			else
 				run('/etc/init.d/happwrt stop');
+			return status();
+		}
+	},
+	set_resource: {
+		args: { key: 'String', enabled: 'String' },
+		call: function (request) {
+			let key = request.args.key || '';
+			let en = (request.args.enabled == '1' || request.args.enabled == 1 ||
+				request.args.enabled === true);
+			let uci = cursor();
+			let cur = uci.get('happwrt', 'main', 'select');
+			let list = (cur == null) ? [] : ((type(cur) == 'array') ? cur : [ cur ]);
+			let out = [];
+
+			for (let i = 0; i < length(list); i++) {
+				let v = '' + list[i];
+				if (length(v) && v != key)
+					push(out, v);
+			}
+
+			if (en && length(key))
+				push(out, key);
+
+			try {
+				uci.delete('happwrt', 'main', 'select');
+			} catch (e) {}
+
+			for (let i = 0; i < length(out); i++)
+				uci.list_append('happwrt', 'main', 'select', out[i]);
+
+			uci.commit('happwrt');
+			uci.unload();
+
+			run('/usr/bin/happwrt apply');
 			return status();
 		}
 	}

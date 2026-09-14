@@ -82,6 +82,17 @@ push(outbounds, { type: 'block', tag: 'block' });
 
 let rsBase = str(opts.rule_set_base, 'https://raw.githubusercontent.com');
 
+const SEL = {
+	youtube: 'youtube', google: 'google', instagram: 'instagram', facebook: 'facebook',
+	twitter: 'twitter', tiktok: 'tiktok', telegram: 'telegram', discord: 'discord',
+	openai: 'openai', netflix: 'netflix', spotify: 'spotify', twitch: 'twitch',
+	reddit: 'reddit', github: 'github', microsoft: 'microsoft', apple: 'apple',
+	steam: 'steam', games: 'category-games', whatsapp: 'whatsapp', signal: 'signal',
+	linkedin: 'linkedin'
+};
+
+let selTags = [];
+
 let ruleSets = [];
 if (mode == 'bypass_ru') {
 	push(ruleSets, {
@@ -127,6 +138,22 @@ if (bool(opts.bypass_games)) {
 	});
 }
 
+if (mode == 'selective') {
+	let sel = arr(opts.select);
+	for (let i = 0; i < length(sel); i++) {
+		let key = sel[i];
+		if (!(key in SEL))
+			continue;
+		let tag = 'sel-' + key;
+		push(selTags, tag);
+		push(ruleSets, {
+			type: 'remote', tag: tag, format: 'binary',
+			url: rsBase + '/SagerNet/sing-geosite/rule-set/geosite-' + SEL[key] + '.srs',
+			download_detour: 'proxy', update_interval: '7d'
+		});
+	}
+}
+
 let ddom = arr(opts.custom_direct_domains);
 let pdom = arr(opts.custom_proxy_domains);
 let dcidr = arr(opts.custom_direct_cidrs);
@@ -166,6 +193,9 @@ if (mode == 'bypass_ru')
 if (mode == 'bypass_blocked')
 	push(rules, { rule_set: [ 'refilter-domains', 'refilter-ips' ], outbound: 'proxy' });
 
+if (mode == 'selective' && length(selTags))
+	push(rules, { rule_set: selTags, outbound: 'proxy' });
+
 if (bool(opts.ad_block))
 	push(rules, { rule_set: [ 'geosite-ads' ], outbound: 'block' });
 
@@ -174,7 +204,7 @@ if (length(pcidr))
 if (length(pdom))
 	push(rules, { domain_suffix: pdom, outbound: 'proxy' });
 
-let final = (mode == 'rules_only' || mode == 'bypass_blocked') ? 'direct' : 'proxy';
+let final = (mode == 'rules_only' || mode == 'bypass_blocked' || mode == 'selective') ? 'direct' : 'proxy';
 
 let dnsServers = [
 	{ type: 'udp', tag: 'dns-direct', server: str(opts.dns_direct, '77.88.8.8') },
@@ -190,6 +220,8 @@ if (mode == 'bypass_ru')
 	push(dnsRules, { rule_set: [ 'geosite-ru' ], server: 'dns-direct' });
 if (mode == 'bypass_blocked')
 	push(dnsRules, { rule_set: [ 'refilter-domains' ], server: 'dns-proxy' });
+if (mode == 'selective' && length(selTags))
+	push(dnsRules, { rule_set: selTags, server: 'dns-proxy' });
 if (length(pdom))
 	push(dnsRules, { domain_suffix: pdom, server: 'dns-proxy' });
 if (bool(opts.clash_api)) {
@@ -197,7 +229,7 @@ if (bool(opts.clash_api)) {
 	push(dnsRules, { clash_mode: 'global', server: 'dns-proxy' });
 }
 
-let dnsFinal = (mode == 'rules_only' || mode == 'bypass_blocked') ? 'dns-direct' : 'dns-proxy';
+let dnsFinal = (mode == 'rules_only' || mode == 'bypass_blocked' || mode == 'selective') ? 'dns-direct' : 'dns-proxy';
 
 let dns = {
 	servers: dnsServers,
